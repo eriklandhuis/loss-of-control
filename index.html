@@ -126,6 +126,47 @@ var welcome = {
 timeline.push(welcome);
 
 // -------------------------------------------------------
+// INFORMATION SHEET
+// -------------------------------------------------------
+var information_sheet = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: '<h2>Study Information</h2>' +
+              '<p><strong>[PLACEHOLDER: Study title and institution]</strong></p>' +
+              '<p>[PLACEHOLDER: Brief description of the study purpose and what participation involves.]</p>' +
+              '<p>[PLACEHOLDER: Information about data storage, anonymity, and confidentiality.]</p>' +
+              '<p>[PLACEHOLDER: Information about voluntary participation and the right to withdraw.]</p>' +
+              '<p>[PLACEHOLDER: Contact details for the research team.]</p>' +
+              '<hr>' +
+              '<p><strong>I have understood what participation in this study involves…</strong></p>',
+    choices: [
+        '…and I agree to participate in this study.',
+        '…but have decided I would rather not participate in this study.'
+    ],
+    data: { trial_type: 'information_sheet' }
+};
+timeline.push(information_sheet);
+
+// If participant declines, show thank-you and end the study
+var declined_screen = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: '<h2>Thank you</h2>' +
+              '<p>Thank you for your time. You may now close this window.</p>',
+    choices: ['Close'],
+    on_finish: function() {
+        jsPsych.endExperiment();
+    }
+};
+
+var if_declined = {
+    timeline: [declined_screen],
+    conditional_function: function() {
+        var last = jsPsych.data.get().last(1).values()[0];
+        return last.response === 1; // Button index 1 = decline
+    }
+};
+timeline.push(if_declined);
+    
+// -------------------------------------------------------
 // SNOWY PICTURES INSTRUCTIONS
 // -------------------------------------------------------
 
