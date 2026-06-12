@@ -166,126 +166,139 @@ var if_declined = {
 };
 timeline.push(if_declined);
     
-// -------------------------------------------------------
-// SNOWY PICTURES INSTRUCTIONS
-// -------------------------------------------------------
+        // -------------------------------------------------------
+        // SNOWY PICTURES SETUP
+        // -------------------------------------------------------
+        var baseURL = 'https://eriklandhuis.github.io/pattern-perception-study/images';
 
-var snowy_instructions = {
-    type: jsPsychHtmlButtonResponse,
-    stimulus: '<h2>Image Task Instructions</h2>' +
-              '<p>In this part of the study, you will be shown a series of images.</p>' +
-              '<p>Each image will start off very unclear and gradually become clearer.</p>' +
-              '<p>For each image, please select:</p>' +
-              '<ul style="text-align:left;">' +
-              '<li><b>"I can\'t see anything"</b> if you cannot make out what the image shows</li>' +
-              '<li><b>"I think I know what is shown"</b> if you think you can identify what is in the image</li>' +
-              '</ul>' +
-              '<p>When you think you know what is shown, you will be asked to type what you saw.</p>' +
-              '<p>There are 20 image sets in total.</p>',
-    choices: ['Start Image Task']
-};
+        // Build all 20 trials (10 hit, 10 fa)
+        var allTrials = [];
+        for (var i = 1; i <= 10; i++) {
+            var setNum = (i < 10) ? "0" + i : "" + i;
+            allTrials.push({ condition: "hit", set: setNum });
+            allTrials.push({ condition: "fa",  set: setNum });
+        }
 
-timeline.push(snowy_instructions);
-
-// -------------------------------------------------------
-// SNOWY PICTURES TRIALS
-// -------------------------------------------------------
-
-// Build a trial for each of the 20 shuffled trials
-for (var t = 0; t < shuffledTrials.length; t++) {
-
-    // Use a closure to capture the trial variables correctly
-    (function(trialInfo, trialNumber) {
-
-        var snowy_trial = {
+        // Shuffle trial order (randomised per participant, no replacement)
+        var shuffledTrials = jsPsych.randomization.shuffle(allTrials);
+        // -------------------------------------------------------
+        // SNOWY PICTURES INSTRUCTIONS
+        // -------------------------------------------------------
+        var snowy_instructions = {
             type: jsPsychHtmlButtonResponse,
-            stimulus: function() { return '<p id="trial-instruction" style="font-size:16px;">Please look carefully at the image below. Select the option that best describes what you see.</p>' +
-                '<img id="trial-image" class="trial-image" src="' + baseURL + '/' + trialInfo.condition + '/' + trialInfo.condition + '_st' + trialInfo.set + '_lvl20.png" />' +
-                '<p id="level-counter" class="level-counter">Image 1 of 20</p>'; },
-            choices: ["I can't see anything. Please show me the next image.", "I think I know what is shown in the image."],
-            button_html: '<button class="trial-button">%choice%</button>',
-            data: {
-                trial_number: trialNumber,
-                condition: trialInfo.condition,
-                set: trialInfo.set,
-                threshold: null,
-                response_text: ''
-            },
-            on_load: function() {
-
-                var currentLevel = 20;
-                var clickCount = 0;
-                var trialData = jsPsych.getCurrentTrial().data;
-
-                function showImage(level) {
-                    var lvl = (level < 10) ? "0" + level : "" + level;
-                    var imageURL = baseURL + "/" + trialInfo.condition + "/" +
-                        trialInfo.condition + "_st" + trialInfo.set + "_lvl" + lvl + ".png";
-                    document.getElementById("trial-image").src = imageURL;
-                    var viewed = 21 - level;
-                    document.getElementById("level-counter").innerHTML = "Image " + viewed + " of 20";
-                }
-                
-                // Override button 1 (I can't see anything)
-                var buttons = document.querySelectorAll(".trial-button");
-
-                buttons[0].addEventListener("click", function(e) {
-                    e.stopImmediatePropagation();
-                    clickCount++;
-                    currentLevel--;
-
-                    if (currentLevel < 1) {
-                        // Seen all 20 images
-                        trialData.threshold = 20;
-                        trialData.response_text = "";
-                        document.getElementById("trial-instruction").innerHTML =
-                            "You have viewed all the images for this trial.";
-                        buttons[0].style.display = "none";
-                        buttons[1].style.display = "none";
-                        // Auto advance after short delay
-                        setTimeout(function() {
-                            jsPsych.finishTrial();
-                        }, 1000);
-                    } else {
-                        showImage(currentLevel);
-                    }
-                }, true);
-               
-                // Override button 2 (I think I know)
-                buttons[1].addEventListener("click", function(e) {
-                    e.stopImmediatePropagation();
-                    trialData.threshold = clickCount;
-
-                    // Hide buttons and show response box
-                    buttons[0].style.display = "none";
-                    buttons[1].style.display = "none";
-
-                    var responseHTML = '<p style="font-size:16px; text-align:center;">Please type what you think you saw in the box below:</p>' +
-                        '<textarea id="response-text" class="response-box"></textarea><br>' +
-                        '<button class="trial-button" id="btn-next" style="display:block; margin: 10px auto;">Please take me to the next trial.</button>';
-
-                    var responseDiv = document.createElement("div");
-                    responseDiv.innerHTML = responseHTML;
-                    document.querySelector(".jspsych-html-button-response-stimulus").appendChild(responseDiv);
-
-                    document.getElementById("btn-next").addEventListener("click", function() {
-                        trialData.response_text = document.getElementById("response-text").value;
-                        jsPsych.finishTrial();
-                    });
-                }, true);
-            }
+            stimulus: '<h2>Image Task Instructions</h2>' +
+                      '<p>In this part of the study, you will be shown a series of images.</p>' +
+                      '<p>Each image will start off very unclear and gradually become clearer.</p>' +
+                      '<p>For each image, please select:</p>' +
+                      '<ul style="text-align:left;">' +
+                      '<li><b>"I can\'t see anything"</b> if you cannot make out what the image shows</li>' +
+                      '<li><b>"I think I know what is shown"</b> if you think you can identify what is in the image</li>' +
+                      '</ul>' +
+                      '<p>When you think you know what is shown, you will be asked to type what you saw.</p>' +
+                      '<p>There are 20 image sets in total.</p>',
+            choices: ['Start Image Task']
         };
+        timeline.push(snowy_instructions);
+        // -------------------------------------------------------
+        // SNOWY PICTURES TRIALS
+        // -------------------------------------------------------
+        for (var t = 0; t < shuffledTrials.length; t++) {
+            (function(trialInfo, trialNumber) {
 
-        timeline.push(snowy_trial);
+                // These closure variables are the reliable way to record data
+                var _threshold = null;
+                var _response_text = '';
+                var _identified = false;
 
-    })(shuffledTrials[t], t + 1);
-}
+                var snowy_trial = {
+                    type: jsPsychHtmlButtonResponse,
+                    stimulus: '<p id="trial-instruction" style="font-size:16px;">Please look carefully at the image below. Select the option that best describes what you see.</p>' +
+                              '<img id="trial-image" class="trial-image" src="' + baseURL + '/' + trialInfo.condition + '/' + trialInfo.condition + '_st' + trialInfo.set + '_lvl20.png" />' +
+                              '<p id="level-counter" class="level-counter">Image 1 of 20</p>',
+                    choices: ["I can't see anything. Please show me the next image.", "I think I know what is shown in the image."],
+                    button_html: '<button class="trial-button">%choice%</button>',
+                    on_load: function() {
+                        var currentLevel = 20;
+                        var clickCount = 0;
 
-// -------------------------------------------------------
-// RUN THE STUDY
-// -------------------------------------------------------
+                        function showImage(level) {
+                            var lvl = (level < 10) ? "0" + level : "" + level;
+                            var imageURL = baseURL + "/" + trialInfo.condition + "/" +
+                                trialInfo.condition + "_st" + trialInfo.set + "_lvl" + lvl + ".png";
+                            document.getElementById("trial-image").src = imageURL;
+                            var viewed = 21 - level;
+                            document.getElementById("level-counter").innerHTML = "Image " + viewed + " of 20";
+                        }
 
-jsPsych.run(timeline);
+                        var buttons = document.querySelectorAll(".trial-button");
 
+                        // Button 1: I can't see anything
+                        buttons[0].addEventListener("click", function(e) {
+                            e.stopImmediatePropagation();
+                            clickCount++;
+                            currentLevel--;
+
+                            if (currentLevel < 1) {
+                                // Participant viewed all 20 images without identifying
+                                _threshold = 20;
+                                _response_text = '';
+                                _identified = false;
+                                document.getElementById("trial-instruction").innerHTML =
+                                    "<p>You have viewed all the images for this set.</p>" +
+                                    "<p>Moving on to the next one...</p>";
+                                buttons[0].style.display = "none";
+                                buttons[1].style.display = "none";
+                                setTimeout(function() {
+                                    jsPsych.finishTrial();
+                                }, 1500);
+                            } else {
+                                showImage(currentLevel);
+                            }
+                        }, true);
+                        
+                        // Button 2: I think I know what is shown
+                        buttons[1].addEventListener("click", function(e) {
+                            e.stopImmediatePropagation();
+                            _threshold = clickCount;
+                            _identified = true;
+
+                            buttons[0].style.display = "none";
+                            buttons[1].style.display = "none";
+
+                            var responseDiv = document.createElement("div");
+                            responseDiv.innerHTML =
+                                '<p style="font-size:16px; text-align:center;">Please type what you think you saw in the box below:</p>' +
+                                '<textarea id="response-text" rows="3" style="width:60%; font-size:15px; padding:8px;"></textarea><br>' +
+                                '<button id="btn-next" class="trial-button" style="display:block; margin:12px auto;">Please take me to the next trial.</button>';
+                            document.querySelector(".jspsych-html-button-response-stimulus").appendChild(responseDiv);
+
+                            document.getElementById("btn-next").addEventListener("click", function() {
+                                _response_text = document.getElementById("response-text").value;
+                                jsPsych.finishTrial();
+                            });
+                        }, true);
+                    },
+                    // on_finish is where data is reliably saved to jsPsych's data store
+                    on_finish: function(data) {
+                        data.task          = 'snowy_pictures';
+                        data.trial_number  = trialNumber;
+                        data.condition     = trialInfo.condition;
+                        data.stimulus_set  = trialInfo.set;
+                        data.threshold     = _threshold !== null ? _threshold : 20;
+                        data.identified    = _identified;
+                        data.response_text = _response_text;
+                    }
+                };
+
+                timeline.push(snowy_trial);
+
+            })(shuffledTrials[t], t + 1);
+        }
+
+        // -------------------------------------------------------
+        // RUN THE STUDY
+        // -------------------------------------------------------
+        jsPsych.run(timeline);
+           
 </script>
 </html> 
